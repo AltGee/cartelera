@@ -7,14 +7,21 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 
 @Composable
 fun AppNavigation(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    val inicio = if (Firebase.auth.currentUser != null) {
+        "peliculas"
+    } else {
+        "login"
+    }
 
     NavHost(
         navController = navController,
-        startDestination = "login",
+        startDestination = inicio,
         modifier = modifier
     ) {
         composable("login") {
@@ -23,13 +30,33 @@ fun AppNavigation(modifier: Modifier = Modifier) {
                     navController.navigate("peliculas") {
                         popUpTo("login") { inclusive = true }
                     }
+                },
+                onRegistrarse = { navController.navigate("registro") }
+            )
+        }
+        composable("registro") {
+            RegistroScreen(
+                onRegistroOk = {
+                    navController.navigate("peliculas") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                },
+                onCancelar = {
+                    navController.popBackStack()
                 }
             )
         }
         composable("peliculas") {
             PeliculasScreen(
-                onPeliculaClick = { peliculaId ->
-                    navController.navigate("detalle/$peliculaId")
+                correo = Firebase.auth.currentUser?.email ?: "",
+                onPeliculaClick = { id ->
+                    navController.navigate("detalle/$id")
+                },
+                onCerrarSesion = {
+                    Firebase.auth.signOut()
+                    navController.navigate("login") {
+                        popUpTo("peliculas") { inclusive = true }
+                    }
                 }
             )
         }
